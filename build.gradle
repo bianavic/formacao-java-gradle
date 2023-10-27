@@ -1,0 +1,45 @@
+//println "Hello build.gradle"
+
+plugins {
+    id 'application'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13'
+}
+
+application {
+    mainClass = 'Task.Types.App'
+}
+
+task deleteBuild (type: Delete) {
+    mustRunAfter = ["copyBuild", "zipReleaseToTestTeam"]
+    delete 'build'
+}
+
+task copyBuild (type: Copy) {
+    from 'build'
+    into '../Release'
+}
+
+// situacao: compartilhar com o time de testes
+// baseName = nome do zip
+// destinationDir = onde sera criado
+// from = da onde ira gerar p build
+task zipReleaseToTestTeam (type: Zip) {
+    baseName = 'ExecutableToTestTeam'
+    destinationDir = file('../ExecutableToTestTeam')
+    from 'build/distributions'
+}
+
+// só gera a release se tasks build e test passarem com sucesso
+// entao ela finaliza a task copiando para a pasta release e criando o zip para o time de testes
+// por fim ele tb consegue deletar a pasta build
+task generateRelease {
+    dependsOn = ["build", "test"]
+    finalizedBy = ["copyBuild", "zipReleaseToTestTeam", "deleteBuild"]
+}
